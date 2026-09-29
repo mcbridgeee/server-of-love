@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bmctiernan.com | server-of-love</title>
+<style>
+  :root {
+    --bg1: #ffe4ef; --bg2: #fff5e6; --ink: #4a2c3d; --soft: #8a6477;
+    --accent: #ff6fa5; --accent-soft: #ffd1e3; --card: #fffafc; --line: #f6c6da;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink);
+    font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    display: grid; place-items: center; padding: 32px 16px; overflow-x: hidden;
+  }
+  .heart { position: fixed; bottom: -40px; font-size: 22px; opacity: .55; animation: float 14s linear infinite; }
+  .heart:nth-child(1) { left: 8%;  animation-delay: 0s; }
+  .heart:nth-child(2) { left: 28%; animation-delay: 4s; font-size: 16px; }
+  .heart:nth-child(3) { left: 55%; animation-delay: 8s; }
+  .heart:nth-child(4) { left: 78%; animation-delay: 2s; font-size: 18px; }
+  .heart:nth-child(5) { left: 92%; animation-delay: 10s; font-size: 14px; }
+  @keyframes float { to { transform: translateY(-115vh) rotate(20deg); } }
+  @media (prefers-reduced-motion: reduce) { .heart { display: none; } }
+  main {
+    position: relative; width: 100%; max-width: 640px; background: var(--card);
+    border: 2px solid var(--line); border-radius: 28px; padding: 36px 32px;
+    box-shadow: 0 12px 0 var(--accent-soft);
+  }
+  .badge {
+    display: inline-block; background: var(--accent-soft); color: var(--ink);
+    border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; letter-spacing: .02em;
+  }
+  h1 { font-size: clamp(30px, 6vw, 42px); margin: 16px 0 6px; line-height: 1.1; }
+  h1 span { color: var(--accent); }
+  .host { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--soft); margin: 0 0 24px; }
+  h2 { font-size: 18px; margin: 28px 0 10px; }
+  p { line-height: 1.6; margin: 0 0 12px; }
+  .path { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 6px; }
+  .step {
+    background: #fff; border: 2px solid var(--line); border-radius: 14px;
+    padding: 8px 12px; font-size: 14px; font-weight: 700;
+  }
+  .step.star { border-color: var(--accent); background: var(--accent-soft); }
+  .arrow { color: var(--accent); font-weight: 700; }
+  .caption { font-size: 13px; color: var(--soft); }
+  footer {
+    margin-top: 28px; padding-top: 16px; border-top: 2px dashed var(--line);
+    font-size: 14px; color: var(--soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .switch {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 24px;
+    background: #ddd3ff; color: #33304f; border: 2px solid #8b6cff; border-radius: 999px;
+    padding: 10px 18px; font-weight: 700; font-size: 15px; text-decoration: none;
+    box-shadow: 0 4px 0 #8b6cff; transition: transform .15s, box-shadow .15s;
+  }
+  .switch:hover { transform: translateY(2px); box-shadow: 0 2px 0 #8b6cff; }
+  .switch:focus-visible { outline: 3px solid #8b6cff; outline-offset: 3px; }
+  .switch.blue { background: #cfe6ff; color: #24394f; border-color: #4ea3f7; box-shadow: 0 4px 0 #4ea3f7; margin-left: 8px; }
+  .switch.blue:hover { box-shadow: 0 2px 0 #4ea3f7; }
+</style>
+</head>
+<body>
+  <div class="heart" aria-hidden="true">&#9825;</div>
+  <div class="heart" aria-hidden="true">&#9825;</div>
+  <div class="heart" aria-hidden="true">&#9825;</div>
+  <div class="heart" aria-hidden="true">&#9825;</div>
+  <div class="heart" aria-hidden="true">&#9825;</div>
+
+  <main>
+    <span class="badge">&#9825; server-of-love is online</span>
+    <h1>hi, you made it to <span>bmctiernan.com</span></h1>
+    <p class="host">served to you by server-of-love</p>
+
+    <p>i'm bridge, and this little page lives on the first web server i ever set up myself, built for is373.</p>
+
+    <h2>how you got here</h2>
+    <div class="path" role="list">
+      <span class="step" role="listitem">your browser</span><span class="arrow" aria-hidden="true">&rarr;</span>
+      <span class="step" role="listitem">dns</span><span class="arrow" aria-hidden="true">&rarr;</span>
+      <span class="step star" role="listitem">traefik</span><span class="arrow" aria-hidden="true">&rarr;</span>
+      <span class="step" role="listitem">apache</span>
+    </div>
+    <p class="caption">dns turned the name into my server's address. traefik picked the right site. apache handed you this page.</p>
+
+    <h2>so what's a reverse proxy?</h2>
+    <p>think of my server as an apartment building. every website lives in its own apartment (a docker container), but they all share one street address.</p>
+    <p>a reverse proxy is the front desk. when you arrive, it checks which name you asked for, locks the conversation with https, and walks you to the right door. mine is called traefik, and it's why one tiny server can host many sites.</p>
+
+    <a class="switch" href="https://www.bmctiernan.com">&#9734; peek through the www door &rarr;</a>
+    <a class="switch blue" href="https://report.bmctiernan.com">&#9729; read the lab report &rarr;</a>
+
+    <footer>
+      <span>bridge</span>
+      <span>built for is373</span>
+    </footer>
+  </main>
+</body>
+</html>

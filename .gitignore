@@ -1,0 +1,8 @@
+# secrets and private settings: never commit these
+acme.json
+hosting.json
+*.htpasswd
+*.tar.gz
+*.pem
+*.key
+.env

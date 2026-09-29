@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>report.bmctiernan.com | server-of-love lab report</title>
+<style>
+  :root {
+    --bg1: #e3f1ff; --bg2: #f0fbff; --ink: #24394f; --soft: #5f7a94;
+    --accent: #4ea3f7; --accent-soft: #cfe6ff; --card: #fbfdff; --line: #c3ddf7;
+    --code-bg: #eef6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink);
+    font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    padding: 32px 16px; overflow-x: hidden;
+  }
+  .bubble { position: fixed; bottom: -40px; font-size: 22px; opacity: .5; animation: float 16s linear infinite; color: var(--accent); }
+  .bubble:nth-child(1) { left: 6%;  animation-delay: 0s; }
+  .bubble:nth-child(2) { left: 30%; animation-delay: 5s; font-size: 16px; }
+  .bubble:nth-child(3) { left: 58%; animation-delay: 9s; }
+  .bubble:nth-child(4) { left: 80%; animation-delay: 3s; font-size: 18px; }
+  .bubble:nth-child(5) { left: 94%; animation-delay: 12s; font-size: 14px; }
+  @keyframes float { to { transform: translateY(-115vh) rotate(-15deg); } }
+  @media (prefers-reduced-motion: reduce) { .bubble { display: none; } }
+  main {
+    position: relative; width: 100%; max-width: 760px; margin: 0 auto; background: var(--card);
+    border: 2px solid var(--line); border-radius: 28px; padding: 36px 32px;
+    box-shadow: 0 12px 0 var(--accent-soft);
+  }
+  @media (max-width: 520px) { main { padding: 28px 18px; } }
+  .badge {
+    display: inline-block; background: var(--accent-soft); color: var(--ink);
+    border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700;
+  }
+  h1 { font-size: clamp(28px, 6vw, 40px); margin: 16px 0 6px; line-height: 1.1; }
+  h1 span { color: var(--accent); }
+  .host { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--soft); margin: 0 0 20px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+  .toc a {
+    display: inline-block; background: #fff; border: 2px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: none;
+  }
+  .toc a:hover { border-color: var(--accent); }
+  section { margin-top: 36px; }
+  h2 { font-size: 20px; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+  h2 .num {
+    display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 15px; flex: none;
+  }
+  p { line-height: 1.6; margin: 0 0 12px; }
+  pre {
+    background: var(--code-bg); border: 2px solid var(--line); border-radius: 16px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 0 0 14px;
+  }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  p code, td code { background: var(--code-bg); padding: 1px 6px; border-radius: 6px; font-size: .92em; }
+  .table-wrap { overflow-x: auto; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; border: 2px solid var(--line); border-radius: 16px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; vertical-align: top; }
+  th { background: var(--accent-soft); font-weight: 700; }
+  tr + tr td { border-top: 1px solid var(--line); }
+  .secret { color: #d94b7b; font-weight: 700; }
+  .todo {
+    border: 2px dashed var(--accent); border-radius: 16px; padding: 12px 16px; margin: 0 0 14px;
+    background: #f5faff; color: var(--soft); font-size: 14px;
+  }
+  .todo::before { content: "\2601  coming soon: "; font-weight: 700; color: var(--accent); }
+  figure { margin: 0 0 14px; }
+  figure img { width: 100%; height: auto; display: block; border: 2px solid var(--line); border-radius: 16px; }
+  figcaption { font-size: 13px; color: var(--soft); margin-top: 6px; }
+  .result { background: var(--accent-soft); border-radius: 16px; padding: 12px 16px; margin: 0 0 14px; }
+  .diagram { width: 100%; height: auto; display: block; margin: 4px 0 14px; }
+  .label { font-weight: 700; }
+  .doors { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+  .door {
+    display: inline-flex; align-items: center; gap: 8px; border-radius: 999px;
+    padding: 10px 18px; font-weight: 700; font-size: 15px; text-decoration: none;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .door:hover { transform: translateY(2px); }
+  .door.pink { background: #ffd1e3; color: #4a2c3d; border: 2px solid #ff6fa5; box-shadow: 0 4px 0 #ff6fa5; }
+  .door.pink:hover { box-shadow: 0 2px 0 #ff6fa5; }
+  .door.lav { background: #ddd3ff; color: #33304f; border: 2px solid #8b6cff; box-shadow: 0 4px 0 #8b6cff; }
+  .door.lav:hover { box-shadow: 0 2px 0 #8b6cff; }
+  .door:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  footer {
+    margin-top: 28px; padding-top: 16px; border-top: 2px dashed var(--line);
+    font-size: 14px; color: var(--soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+</style>
+</head>
+<body>
+  <div class="bubble" aria-hidden="true">&#9729;</div>
+  <div class="bubble" aria-hidden="true">&#10022;</div>
+  <div class="bubble" aria-hidden="true">&#9729;</div>
+  <div class="bubble" aria-hidden="true">&#10022;</div>
+  <div class="bubble" aria-hidden="true">&#9729;</div>
+
+  <main>
+    <span class="badge">&#9729; lab report</span>
+    <h1>how server-of-love works, at <span>report.bmctiernan.com</span></h1>
+    <p class="host">bridge &middot; is373 hosting lab</p>
+
+    <p>server-of-love is a digitalocean droplet running ubuntu 24.04 lts. it hosts bmctiernan.com and www.bmctiernan.com over trusted https, with the traefik dashboard at traefik.bmctiernan.com and this report at report.bmctiernan.com.</p>
+
+    <ul class="toc">
+      <li><a href="#path">1. request path</a></li>
+      <li><a href="#dns">2. dns</a></li>
+      <li><a href="#pages">3. welcome pages</a></li>
+      <li><a href="#verify">4. verification</a></li>
+      <li><a href="#dashboard">5. dashboard</a></li>
+      <li><a href="#failure">6. controlled failure</a></li>
+      <li><a href="#backup">7. backup plan</a></li>
+    </ul>
+
+    <section id="path">
+      <h2><span class="num">1</span> the request path</h2>
+      <svg class="diagram" viewBox="0 0 760 560" role="img" aria-label="every request crosses dns, tls and a traefik host rule before apache answers" font-family="ui-rounded, Nunito, system-ui, sans-serif" font-size="13">
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7fa9d1"/></marker></defs>
+        <rect x="24" y="152" width="712" height="384" rx="18" fill="#eef6ff" stroke="#c3ddf7" stroke-width="2"/>
+        <g fill="none" stroke="#7fa9d1" stroke-width="1.5">
+          <path d="M220 92H290" marker-end="url(#arr)"/>
+          <path d="M130 120V204" marker-end="url(#arr)"/>
+          <path d="M630 120V204" marker-end="url(#arr)"/>
+          <path d="M460 232H300" marker-end="url(#arr)"/>
+          <path d="M170 260V332H190" marker-end="url(#arr)"/>
+          <path d="M380 364V392H116V420" marker-end="url(#arr)"/>
+          <path d="M380 364V392H292V420" marker-end="url(#arr)"/>
+          <path d="M380 364V392H468V420" marker-end="url(#arr)"/>
+          <path d="M380 364V392H644V420" marker-end="url(#arr)"/>
+        </g>
+        <g stroke="#c3ddf7" stroke-width="2" fill="#fff">
+          <rect x="40" y="64" width="180" height="56" rx="14"/>
+          <rect x="290" y="64" width="180" height="56" rx="14"/>
+          <rect x="540" y="64" width="180" height="56" rx="14"/>
+          <rect x="40" y="204" width="260" height="56" rx="14"/>
+          <rect x="460" y="204" width="260" height="56" rx="14"/>
+          <rect x="40" y="420" width="152" height="60" rx="14" fill="#ffe4ef" stroke="#f6c6da"/>
+          <rect x="216" y="420" width="152" height="60" rx="14" fill="#ece6ff" stroke="#d6ccfa"/>
+          <rect x="392" y="420" width="152" height="60" rx="14" fill="#cfe6ff" stroke="#4ea3f7"/>
+          <rect x="568" y="420" width="152" height="60" rx="14"/>
+        </g>
+        <rect x="190" y="300" width="380" height="64" rx="16" fill="#cfe6ff" stroke="#4ea3f7" stroke-width="2.5"/>
+        <g text-anchor="middle" fill="#24394f">
+          <text x="130" y="88" font-weight="700">browser</text><text x="130" y="106" font-size="11.5" fill="#5f7a94">visitor types the name</text>
+          <text x="380" y="88" font-weight="700">dns at porkbun</text><text x="380" y="106" font-size="11.5" fill="#5f7a94">name to 192.241.153.53</text>
+          <text x="630" y="88" font-weight="700">let's encrypt</text><text x="630" y="106" font-size="11.5" fill="#5f7a94">issues the certificates</text>
+          <text x="170" y="228" font-weight="700">websecure, port 443</text><text x="170" y="246" font-size="11.5" fill="#5f7a94">tls with the let's encrypt cert</text>
+          <text x="590" y="228" font-weight="700">web, port 80</text><text x="590" y="246" font-size="11.5" fill="#5f7a94">redirects, answers challenges</text>
+          <text x="380" y="326" font-weight="700">traefik routers</text><text x="380" y="346" font-size="11.5">match the host rule, pick the container</text>
+          <text x="116" y="446" font-weight="700">apache: site-1</text><text x="116" y="466" font-size="11" fill="#5f7a94">bmctiernan.com</text>
+          <text x="292" y="446" font-weight="700">apache: site-2</text><text x="292" y="466" font-size="11" fill="#5f7a94">www.bmctiernan.com</text>
+          <text x="468" y="446" font-weight="700">apache: site-3</text><text x="468" y="466" font-size="11" fill="#5f7a94">report.bmctiernan.com</text>
+          <text x="644" y="446" font-weight="700">dashboard</text><text x="644" y="466" font-size="11" fill="#5f7a94">traefik.bmctiernan.com</text>
+          <text x="255" y="84" font-size="11.5" fill="#5f7a94">1. look up</text>
+          <text x="380" y="224" font-size="11.5" fill="#5f7a94">redirect</text>
+        </g>
+        <g font-size="11.5" fill="#5f7a94">
+          <text x="140" y="180">2. https request</text>
+          <text x="620" y="180" text-anchor="end">http-01 challenge</text>
+          <text x="388" y="384">3. host rule picks one</text>
+          <text x="40" y="518">server-of-love (digitalocean, ubuntu 24.04), ufw allows only ports 22, 80 and 443</text>
+        </g>
+      </svg>
+      <p>dns turns the name into the droplet's ip. the firewall only admits ports 22, 80 and 443. on port 443, traefik completes tls with the let's encrypt certificate, matches the hostname against each router's host rule, and forwards the request to that hostname's apache container, which serves its bind-mounted page. port 80 only redirects to https and answers let's encrypt's http-01 challenges.</p>
+    </section>
+
+    <section id="dns">
+      <h2><span class="num">2</span> dns answers</h2>
+      <p>every hostname resolves to the droplet's ipv4 address, and none has an aaaa record. the records are a records at porkbun with a 600 second ttl. porkbun's default parking records (an alias on the bare domain and a wildcard cname) were removed first so they couldn't compete.</p>
+<pre><code>bridge@server-of-love:~$ dig +short A bmctiernan.com
+192.241.153.53
+bridge@server-of-love:~$ dig +short A www.bmctiernan.com
+192.241.153.53
+bridge@server-of-love:~$ dig @1.1.1.1 +short A traefik.bmctiernan.com
+192.241.153.53
+bridge@server-of-love:~$ dig +short AAAA bmctiernan.com
+bridge@server-of-love:~$</code></pre>
+      <p>report.bmctiernan.com was added later with the same kind of a record, and the verifier in section 4 confirms it also resolves to 192.241.153.53.</p>
+      <p><span class="label">why there's no aaaa record:</span> an aaaa record maps a name to an ipv6 address. ipv6 isn't enabled on this droplet, so there's nothing to point to. leaving it empty is on purpose: a stale or wrong aaaa record would send ipv6 visitors to a different machine, and let's encrypt could fail to validate the certificate over ipv6.</p>
+    </section>
+
+    <section id="pages">
+      <h2><span class="num">3</span> welcome pages</h2>
+      <p>every website hostname gets its own apache container and its own page, so you can tell which container answered. the lab allows a smaller instructor-approved list than five, and in class the requirement was one to two sites.</p>
+      <div class="table-wrap"><table>
+        <tr><th>hostname</th><th>container</th><th>page</th></tr>
+        <tr><td>bmctiernan.com</td><td><code>hosting373-site-1-1</code></td><td>pink. traces the request path and explains a reverse proxy as an apartment building's front desk.</td></tr>
+        <tr><td>www.bmctiernan.com</td><td><code>hosting373-site-2-1</code></td><td>lavender. explains how traefik tells the two hostnames apart and forwards each to its own container.</td></tr>
+        <tr><td>report.bmctiernan.com</td><td><code>hosting373-site-3-1</code></td><td>blue. this lab report.</td></tr>
+      </table></div>
+      <p>each page includes my name, the course, its own hostname (which the verifier checks for), and buttons to the other pages. pages live at <code>runtime/sites/&lt;hostname&gt;/index.html</code> and are bind-mounted into the containers, so edits show up on refresh without rebuilding anything.</p>
+    </section>
+
+    <section id="verify">
+      <h2><span class="num">4</span> verification output</h2>
+      <p>the instructor's verifier passed for every hostname: each resolves to the server, plain http redirects to https, the certificate is trusted, and the https response is correct.</p>
+<pre><code>bridge@server-of-love:~/373_hosting$ python3 scripts/verify.py --config hosting.json
+bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response
+www.bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response
+report.bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response
+traefik.bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response</code></pre>
+      <p>certificates come from let's encrypt through traefik's http-01 challenge on port 80, which is why port 80 stays open even though every visitor gets redirected to 443.</p>
+    </section>
+
+    <section id="dashboard">
+      <h2><span class="num">5</span> traefik dashboard</h2>
+      <p>the dashboard at <code>traefik.bmctiernan.com/dashboard/</code> shows how traefik connects each request to a container. it's read-only: routes come from docker labels in the compose file, not from clicking around here.</p>
+      <div class="table-wrap"><table>
+        <tr><th>part</th><th>on this server</th><th>what it does</th></tr>
+        <tr><td>entry point</td><td><code>websecure</code> (port 443)</td><td>where traefik listens. <code>web</code> (port 80) only redirects and answers certificate challenges.</td></tr>
+        <tr><td>router</td><td><code>site-1@docker</code></td><td>matches <code>Host(`bmctiernan.com`)</code> on <code>websecure</code> and sends the request to its service.</td></tr>
+        <tr><td>service</td><td><code>site-1</code></td><td>forwards the request to the <code>hosting373-site-1-1</code> apache container.</td></tr>
+      </table></div>
+      <figure>
+        <img src="dashboard.png" alt="traefik dashboard showing entrypoints traefik 8080, web 80 and websecure 443, with 7 routers, 9 services and 1 middleware, all successful">
+        <figcaption>the dashboard: three entrypoints, 7 routers, 9 services, 1 middleware, 0 warnings or errors, and 4 certificates.</figcaption>
+      </figure>
+      <p>the full router list, read from traefik's api:</p>
+<pre><code>acme-http@internal | PathPrefix(`/.well-known/acme-challenge/`) | acme-http@internal | ['web']
+dashboard@docker | Host(`traefik.bmctiernan.com`) | api@internal | ['websecure']
+ping@internal | PathPrefix(`/ping`) | ping@internal | ['traefik']
+site-1@docker | Host(`bmctiernan.com`) | site-1 | ['websecure']
+site-2@docker | Host(`www.bmctiernan.com`) | site-2 | ['websecure']
+site-3@docker | Host(`report.bmctiernan.com`) | site-3 | ['websecure']
+web-to-websecure@internal | HostRegexp(`^.+$`) | noop@internal | ['web']</code></pre>
+      <p>reading it: the three <code>site</code> routers and the dashboard only listen on <code>websecure</code>. on port 80, <code>acme-http</code> answers let's encrypt's challenges and <code>web-to-websecure</code> catches everything else and redirects it to https. <code>ping</code> lives on the internal <code>traefik</code> entrypoint (port 8080, which isn't published to the internet) and powers the container's health check.</p>
+    </section>
+
+    <section id="failure">
+      <h2><span class="num">6</span> controlled failure</h2>
+      <p>i stopped the apache container behind bmctiernan.com on purpose, predicted what would break, checked each layer, then brought it back. everything below is real output from the server.</p>
+      <p><span class="label">the break:</span></p>
+<pre><code>cd ~/373_hosting
+sudo docker compose -f runtime/compose.yaml stop site-1</code></pre>
+      <p><span class="label">hypothesis:</span> dns, the firewall and traefik are untouched, so the name still resolves and the connection still reaches traefik. but traefik only creates routes for running containers, so it should drop the bmctiernan.com router. i expect a 404 from traefik instead of my page, while www.bmctiernan.com keeps working because it has its own container.</p>
+      <p><span class="label">evidence, layer by layer:</span></p>
+<pre><code>dig +short A bmctiernan.com
+sudo docker compose -f runtime/compose.yaml ps
+curl -I --connect-timeout 5 https://bmctiernan.com/
+curl -I --connect-timeout 5 https://www.bmctiernan.com/</code></pre>
+      <pre><code>[+] stop 1/1
+ &#10004; Container hosting373-site-1-1 Stopped
+192.241.153.53
+NAME                   IMAGE              SERVICE   STATUS
+hosting373-site-2-1    httpd:2.4-alpine   site-2    Up 29 minutes
+hosting373-site-3-1    httpd:2.4-alpine   site-3    Up 6 minutes
+hosting373-traefik-1   traefik:v3.7.13    traefik   Up 29 minutes (healthy)
+
+HTTP/2 404                         &lt;- curl -I https://bmctiernan.com/
+content-type: text/plain; charset=utf-8
+content-length: 19
+
+HTTP/2 404                         &lt;- curl -skI https://bmctiernan.com/
+content-type: text/plain; charset=utf-8
+content-length: 19
+
+HTTP/2 200                         &lt;- curl -I https://www.bmctiernan.com/
+content-type: text/html
+server: Apache/2.4.68 (Unix)
+content-length: 5302</code></pre>
+      <p class="caption" style="font-size:13px;color:var(--soft)">the <code>ps</code> table is trimmed to its useful columns, and the arrows labeling which curl produced each response are added for readability. everything else is exactly as printed.</p>
+      <figure>
+        <img src="failure-404.png" alt="browser at bmctiernan.com showing the plain text 404 page not found">
+        <figcaption>what a visitor saw at bmctiernan.com while site-1 was stopped.</figcaption>
+      </figure>
+      <div class="result"><p><span class="label">result: the hypothesis held, layer by layer.</span></p>
+      <p>dns still answered 192.241.153.53, so the name layer was fine. site-1 disappeared from the running containers while traefik stayed healthy. traefik answered with its own plain-text 404 (19 bytes, no <code>server: Apache</code> header), which proves the request reached traefik but no router matched, since traefik drops a route when its container stops. www.bmctiernan.com kept returning 200 from apache, so the failure was isolated to one container.</p>
+      <p style="margin:0"><span class="label">one thing i didn't predict:</span> the plain <code>curl -I</code> without <code>-k</code> succeeded, meaning the certificate was still trusted even with the site down. certificates are stored by traefik in <code>acme.json</code>, not inside the apache container, so stopping a site doesn't take its tls with it.</p></div>
+      <p><span class="label">the fix:</span></p>
+<pre><code>sudo docker compose -f runtime/compose.yaml start site-1
+python3 scripts/verify.py --config hosting.json</code></pre>
+      <pre><code>[+] start 1/1
+ &#10004; Container hosting373-site-1-1 Started
+bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response
+www.bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response
+report.bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response
+traefik.bmctiernan.com: DNS 192.241.153.53
+  PASS: HTTP redirect, trusted TLS, and HTTPS response</code></pre>
+      <p>starting the container brought the router back on its own, with no traefik restart or config change needed.</p>
+      <p><span class="label">what it shows:</span> a 404 at a working address points to routing or content, not dns or the network. checking layers in order finds the broken one instead of restarting things blindly.</p>
+    </section>
+
+    <section id="backup">
+      <h2><span class="num">7</span> backup and restore plan</h2>
+      <p>a fresh git clone of the course repo only restores the scripts. everything that makes this server mine lives in files git ignores, so those get backed up, and the backup lives off the server.</p>
+      <div class="table-wrap"><table>
+        <tr><th>what</th><th>where</th><th>private?</th></tr>
+        <tr><td>settings</td><td><code>hosting.json</code></td><td>keep private (has my email)</td></tr>
+        <tr><td>generated compose file</td><td><code>runtime/compose.yaml</code></td><td>not secret, needed to restore</td></tr>
+        <tr><td>welcome pages</td><td><code>runtime/sites/</code></td><td>not secret, also on my laptop</td></tr>
+        <tr><td>certificates + acme account key</td><td><code>runtime/letsencrypt/acme.json</code></td><td class="secret">secret. never share or commit</td></tr>
+        <tr><td>ssh private key</td><td><code>~/.ssh/id_ed25519</code> on my laptop</td><td class="secret">secret. never leaves the laptop</td></tr>
+        <tr><td>sudo password</td><td>password manager</td><td class="secret">secret</td></tr>
+      </table></div>
+      <p><span class="label">backup</span> (a few seconds of downtime, archive readable only by root):</p>
+<pre><code>sudo install -d -m 700 /var/backups/hosting373
+sudo docker compose -f runtime/compose.yaml stop
+sudo sh -c 'umask 077; tar -czf /var/backups/hosting373/backup-$(date -u +%Y%m%dT%H%M%SZ).tar.gz runtime hosting.json'
+sudo docker compose -f runtime/compose.yaml up -d</code></pre>
+      <p>then copy the archive to my own computer, encrypted, and never to github. a backup left on the same droplet disappears with it.</p>
+      <p><span class="label">restore</span> on a new droplet: redo the user, firewall and docker setup, clone the course repo, extract the archive into it, check that <code>acme.json</code> is still permission 600, point dns at the new ip, start the stack, then run the verifier. if the certificate file is lost, traefik just requests new certificates once dns points at the server.</p>
+    </section>
+
+    <div class="doors">
+      <a class="door pink" href="https://bmctiernan.com">&#9825; main door &rarr;</a>
+      <a class="door lav" href="https://www.bmctiernan.com">&#9734; www door &rarr;</a>
+    </div>
+
+    <footer>
+      <span>bridge</span>
+      <span>built for is373</span>
+    </footer>
+  </main>
+</body>
+</html>
