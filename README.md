@@ -21,12 +21,21 @@ sites/
   bmctiernan.com/index.html
   www.bmctiernan.com/index.html
   report.bmctiernan.com/index.html (+ dashboard.png, failure-404.png)
+deploy.sh              copies pages to the live site folders
 hosting.example.json   template of the settings file (the real one stays private)
 ```
 
-## deploying a page change
+## editing and deploying
 
-on the server, each page lives at `~/373_hosting/runtime/sites/<hostname>/index.html`. copy an edited page there and refresh the site; no restart needed.
+this repo is cloned on the server at `~/server-of-love`. edit a page there, then:
+
+```bash
+./deploy.sh                       # copy pages into the live site folders
+git add -A && git commit -m "..."  # save a snapshot
+git push                           # back it up to github
+```
+
+the live pages are served from `~/373_hosting/runtime/sites/<hostname>/`, and changes show up on refresh with no restart.
 
 ## never committed
 
