@@ -1,0 +1,32 @@
+# Routing adapter for the toothpaste quiz (mcbridgeee/is373-ci-cd).
+#
+# Copy into the QUIZ checkout on the droplet as compose.override.yaml (that
+# repo ignores it). Its Make commands load it on every operation. This file
+# only connects the quiz's prod container to the Traefik that already runs
+# here: it starts no second proxy and publishes no host ports.
+services:
+  prod:
+    networks:
+      - default
+      - hosting
+    labels:
+      traefik.enable: "true"
+      # prod is on two networks; tell Traefik which one it can reach.
+      traefik.docker.network: ${TRAEFIK_NETWORK:-hosting-web}
+      traefik.http.routers.quiz.rule: Host(`${APP_HOST:?Set APP_HOST in the quiz checkout's .env}`)
+      # websecure already has the Let's Encrypt resolver; web already redirects to HTTPS.
+      traefik.http.routers.quiz.entrypoints: websecure
+      traefik.http.routers.quiz.middlewares: quiz-headers
+      traefik.http.routers.quiz.service: quiz
+      traefik.http.services.quiz.loadbalancer.server.port: "8000"
+      # HSTS: browsers refuse plain HTTP for this host for a year. Only the TLS
+      # terminator can send it honestly. No preload, no subdomains.
+      traefik.http.middlewares.quiz-headers.headers.stsSeconds: "31536000"
+      # Don't advertise the proxy.
+      traefik.http.middlewares.quiz-headers.headers.customResponseHeaders.Server: ""
+
+networks:
+  hosting:
+    # Must already exist (created by the hosting stack); a typo fails loudly.
+    external: true
+    name: ${TRAEFIK_NETWORK:-hosting-web}
