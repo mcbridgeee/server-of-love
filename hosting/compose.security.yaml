@@ -1,0 +1,18 @@
+# Overlay for the 373_hosting stack: puts a password on the Traefik dashboard
+# (373_hosting chapter 5, "add a password"). Kept as an overlay so regenerating
+# runtime/compose.yaml can't silently drop it.
+#
+# Use it on EVERY hosting-stack command, from ~/373_hosting:
+#   sudo docker compose -f runtime/compose.yaml -f ~/server-of-love/hosting/compose.security.yaml up -d
+#
+# runtime/secrets/dashboard.htpasswd is created on the droplet with htpasswd
+# and never committed (see security/README.md).
+services:
+  traefik:
+    volumes:
+      - ./secrets/dashboard.htpasswd:/run/secrets/dashboard.htpasswd:ro
+    labels:
+      traefik.http.routers.dashboard.middlewares: dashboard-auth
+      traefik.http.middlewares.dashboard-auth.basicauth.usersfile: /run/secrets/dashboard.htpasswd
+      # Don't pass the credentials on to the dashboard backend.
+      traefik.http.middlewares.dashboard-auth.basicauth.removeheader: "true"
