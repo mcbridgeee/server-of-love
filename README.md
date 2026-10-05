@@ -22,7 +22,9 @@ sites/
   bmctiernan.com/index.html
   www.bmctiernan.com/index.html
   report.bmctiernan.com/index.html (+ dashboard.png, failure-404.png)
-integrations/quiz/     traefik route for the quiz app (copied into the app's checkout)
+integrations/quiz/     traefik route for the quiz app (copied into the app's checkout), with a rate limit
+hosting/               overlay for the hosting stack: password on the traefik dashboard
+security/              hardening runbook + fail2ban, ssh, systemd config to copy onto the droplet
 deploy.sh              copies pages to the live site folders
 hosting.example.json   template of the settings file (the real one stays private)
 ```
@@ -43,6 +45,10 @@ the live pages are served from `~/373_hosting/runtime/sites/<hostname>/`, and ch
 
 the quiz isn't an apache site. it's a container image built, tested, and published by [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd), then pulled here. `integrations/quiz/` is the small adapter that connects it to traefik. the step-by-step lives in the app repo's [docs/hosting.md](https://github.com/mcbridgeee/is373-ci-cd/blob/main/docs/hosting.md).
 
+## security
+
+[security/README.md](security/README.md) hardens the droplet step by step: ssh keys only, firewall, a dashboard password, fail2ban (bans repeat ssh guessers and ips that keep flooding the quiz after traefik rate-limits them), and automatic security updates. each step has a check and an undo.
+
 ## never committed
 
-`acme.json` (certificates and the let's encrypt account key), the real `hosting.json`, ssh keys and passwords. `.gitignore` blocks the common ones.
+`acme.json` (certificates and the let's encrypt account key), the real `hosting.json`, ssh keys, passwords, and `dashboard.htpasswd`. `.gitignore` blocks the common ones.
