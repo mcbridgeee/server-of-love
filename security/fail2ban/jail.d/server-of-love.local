@@ -1,0 +1,36 @@
+# fail2ban jails for server-of-love. Install to /etc/fail2ban/jail.d/
+# (see security/README.md). Ban counts: sudo fail2ban-client status <jail>
+#
+# Want to make sure you never ban yourself? Add your home IP after the
+# defaults, space-separated:  ignoreip = 127.0.0.1/8 ::1 203.0.113.7
+
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1
+
+# Repeated failed SSH logins. Ubuntu 24.04 logs sshd to the journal, so read
+# it from systemd rather than /var/log/auth.log.
+[sshd]
+enabled  = true
+backend  = systemd
+maxretry = 5
+findtime = 10m
+bantime  = 1h
+
+# IPs that keep flooding the quiz after Traefik has rate-limited them.
+# 300 rate-limited requests inside one minute takes a script; a classroom
+# sharing one IP and loading the page normally gets no 429s at all.
+[traefik-quiz-ratelimit]
+enabled  = true
+filter   = traefik-quiz-ratelimit
+# Traefik logs to stdout, which Docker writes to these files. The glob is
+# expanded when fail2ban starts: reload fail2ban after Traefik is recreated.
+logpath  = /var/lib/docker/containers/*/*-json.log
+backend  = polling
+maxretry = 300
+findtime = 1m
+bantime  = 10m
+# Traffic to Docker-published ports (Traefik's 80/443) never passes the INPUT
+# chain, so a normal ban would do nothing. DOCKER-USER is the chain Docker
+# checks first for container traffic.
+banaction = iptables-allports
+chain    = DOCKER-USER
