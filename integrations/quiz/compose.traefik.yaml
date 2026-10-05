@@ -16,7 +16,7 @@ services:
       traefik.http.routers.quiz.rule: Host(`${APP_HOST:?Set APP_HOST in the quiz checkout's .env}`)
       # websecure already has the Let's Encrypt resolver; web already redirects to HTTPS.
       traefik.http.routers.quiz.entrypoints: websecure
-      traefik.http.routers.quiz.middlewares: quiz-headers
+      traefik.http.routers.quiz.middlewares: quiz-ratelimit,quiz-headers
       traefik.http.routers.quiz.service: quiz
       traefik.http.services.quiz.loadbalancer.server.port: "8000"
       # HSTS: browsers refuse plain HTTP for this host for a year. Only the TLS
@@ -24,6 +24,12 @@ services:
       traefik.http.middlewares.quiz-headers.headers.stsSeconds: "31536000"
       # Don't advertise the proxy.
       traefik.http.middlewares.quiz-headers.headers.customResponseHeaders.Server: ""
+      # Rate limit per client IP: past the burst, Traefik answers 429 Too Many
+      # Requests. Loose on purpose: a whole classroom shares one public IP, and a
+      # page load is about 3 requests. A script flooding the site still trips it,
+      # and fail2ban (security/) bans IPs that keep going after their 429s.
+      traefik.http.middlewares.quiz-ratelimit.ratelimit.average: "50"
+      traefik.http.middlewares.quiz-ratelimit.ratelimit.burst: "100"
 
 networks:
   hosting:
