@@ -47,7 +47,7 @@ the quiz isn't an apache site. it's a container image built, tested, and publish
 
 ## security
 
-[security/README.md](security/README.md) hardens the droplet step by step: ssh keys only, firewall, a dashboard password, fail2ban (bans repeat ssh guessers and ips that keep flooding the quiz after traefik rate-limits them), and automatic security updates. each step has a check and an undo.
+[security/README.md](security/README.md) hardens the droplet step by step: no root login over ssh and keys only, firewall, a dashboard password, fail2ban (bans repeat ssh guessers and ips that keep flooding the quiz after traefik rate-limits them), and security updates every night at 2am. each step has a check and an undo, and the top of that file maps each of the instructor's requirements to where it lives.
 
 ## never committed
 

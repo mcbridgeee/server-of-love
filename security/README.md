@@ -8,22 +8,53 @@ first pull this repo on the droplet so the files below exist:
 cd ~/server-of-love && git pull
 ```
 
+## instructor requirements → where they are
+
+| requirement | where | step |
+| --- | --- | --- |
+| fail2ban blocks people after x failed attempts | `security/fail2ban/` | 4 |
+| security updates every night at 2am | `security/updates/`, `security/systemd/apt-daily*-timer.conf` | 5 |
+| no root login over ssh | `security/ssh/10-server-of-love.conf` | 1 |
+| security scanner (trivy) in the github action that deploys the image | is373-ci-cd `.github/workflows/ci.yml` (issue #16) | n/a |
+| hardened dockerfile | is373-ci-cd `Dockerfile` (issue #5) | n/a |
+| push to deploy: github → docker hub → server updates itself | is373-ci-cd ci/cd + WUD, `docs/hosting.md` (issues #6, #7, #18) | n/a |
+
 | step | protects against | risk if done wrong |
 | --- | --- | --- |
-| 1. ssh keys only | password guessing | **locking yourself out** (read step 1 twice) |
+| 1. your own user, no root ssh, keys only | password guessing, root takeover | **locking yourself out** (read step 1 twice) |
 | 2. firewall | stray open ports | locking out ssh if 22 isn't allowed first |
 | 3. dashboard password | anyone reading your traefik setup | none |
 | 4. fail2ban | repeat ssh guessers, request floods | banning yourself (unban command below) |
-| 5. security updates | known ubuntu bugs | none |
+| 5. nightly security updates at 2am | known ubuntu bugs | a short reboot at 2:30 when an update needs one |
 
-## 1. ssh: keys only
+## 1. ssh: your own user, no root login, keys only
 
-**before anything:** open a *second* terminal and log in to the droplet. leave it open the whole time. if a change breaks ssh, you fix it from that session. digitalocean's web console (droplet → access → launch droplet console) is the last-resort way in.
+**before anything:** open a *second* terminal and log in to the droplet. leave it open the whole time. if a change breaks ssh, you fix it from that session. digitalocean's web console (droplet → access → launch droplet console) is the last-resort way in; it isn't ssh, so it still works after this step.
 
-check that your key login works on its own, from your own computer:
+### 1a. make your own sudo user (skip if you already log in as one)
+
+check who you log in as: `whoami`. if it says `root`, create a user (pick your own name instead of `bridget`) and give it your existing ssh key:
 
 ```bash
-ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes <you>@<droplet-ip> echo key-login-ok
+adduser bridget                                   # set a password; sudo asks for it
+usermod -aG sudo bridget
+rsync --archive --chown=bridget:bridget ~/.ssh /home/bridget
+```
+
+from your own computer, in a **new** terminal:
+
+```bash
+ssh bridget@<droplet-ip> 'sudo whoami'            # asks for bridget's password, then prints: root
+```
+
+only continue if that prints `root`. from now on you log in as `bridget` and type `sudo -i` when you need root. `sudo -i` puts you in root's home, so `~/373_hosting`, `~/server-of-love`, and `~/is373-ci-cd` are exactly where they were.
+
+### 1b. turn off root login and passwords
+
+check that key login works on its own, from your own computer:
+
+```bash
+ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes bridget@<droplet-ip> echo key-login-ok
 ```
 
 only if that prints `key-login-ok`:
@@ -37,10 +68,13 @@ sudo systemctl reload ssh
 check from a *new* terminal (keep the old ones open):
 
 ```bash
-ssh <you>@<droplet-ip> echo still-in                                    # works with your key
-ssh -o PubkeyAuthentication=no <you>@<droplet-ip>                       # must say "Permission denied (publickey)"
-sudo sshd -T | grep -E "passwordauthentication|permitrootlogin"         # no / prohibit-password
+ssh bridget@<droplet-ip> echo still-in                                  # works with your key
+ssh root@<droplet-ip>                                                    # must say "Permission denied (publickey)"
+ssh -o PubkeyAuthentication=no bridget@<droplet-ip>                     # must say "Permission denied (publickey)"
+sudo sshd -T | grep -E "passwordauthentication|permitrootlogin"         # passwordauthentication no, permitrootlogin no
 ```
+
+the file is named `10-…` because sshd keeps the first value it reads. digitalocean's `50-cloud-init.conf` can say `PasswordAuthentication yes`, and ours has to win. rehearsed with ubuntu 24.04's own sshd (openssh 9.6p1): with a cloud-init file saying yes to both, the effective settings were `permitrootlogin no`, `passwordauthentication no`, `maxauthtries 3`.
 
 undo: `sudo rm /etc/ssh/sshd_config.d/10-server-of-love.conf && sudo systemctl reload ssh`
 
@@ -161,23 +195,46 @@ seq 300 | xargs -P 50 -I{} curl -s -o /dev/null -w "%{http_code}\n" https://quiz
 
 you'll see a mix of `200` and `429`. that stays under the ban threshold.
 
-## 5. automatic security updates
+## 5. security updates every night at 2am
 
-ubuntu 24.04 usually has this on already. check:
+ubuntu's `unattended-upgrades` installs security updates, but by default at a random time each morning. these files pin it to **2:00 every night** (package lists download at 1:30), and reboot at 2:30 **only if** an update needs it (kernel, libc). everything comes back by itself after a reboot: traefik and the sites, the quiz, WUD (`restart: unless-stopped`), and fail2ban (started after docker).
+
+set the droplet's clock to your time zone first, so "2am" means 2am for you (droplets start on UTC):
 
 ```bash
-systemctl is-enabled unattended-upgrades                 # enabled
-cat /etc/apt/apt.conf.d/20auto-upgrades                  # both lines "1"
+sudo timedatectl set-timezone America/New_York
+timedatectl | grep "Time zone"
 ```
 
-if not:
+then:
 
 ```bash
 sudo apt-get install -y unattended-upgrades
-sudo dpkg-reconfigure -plow unattended-upgrades          # answer yes
+sudo cp ~/server-of-love/security/updates/20auto-upgrades /etc/apt/apt.conf.d/20auto-upgrades
+sudo cp ~/server-of-love/security/updates/52-server-of-love-unattended-upgrades /etc/apt/apt.conf.d/
+sudo install -D -m 644 ~/server-of-love/security/systemd/apt-daily-timer.conf /etc/systemd/system/apt-daily.timer.d/server-of-love.conf
+sudo install -D -m 644 ~/server-of-love/security/systemd/apt-daily-upgrade-timer.conf /etc/systemd/system/apt-daily-upgrade.timer.d/server-of-love.conf
+sudo systemctl daemon-reload
+sudo systemctl restart apt-daily.timer apt-daily-upgrade.timer
 ```
 
-this patches ubuntu packages only. container images (traefik, apache, the quiz) update separately; the quiz updates through its ci/cd pipeline.
+check:
+
+```bash
+systemctl list-timers 'apt-daily*'                       # NEXT: tonight 01:30 and 02:00
+apt-config dump | grep -E "Periodic::(Update-Package-Lists|Unattended-Upgrade)|Automatic-Reboot"
+sudo unattended-upgrade --dry-run --debug 2>&1 | tail -5  # what it would install right now
+```
+
+after the first night, show it ran:
+
+```bash
+sudo tail -20 /var/log/unattended-upgrades/unattended-upgrades.log
+```
+
+undo: `sudo rm -r /etc/systemd/system/apt-daily*.timer.d && sudo systemctl daemon-reload` (back to ubuntu's random morning time).
+
+this patches ubuntu packages only. the quiz image gets its security fixes through its ci/cd pipeline (weekly dependabot base-image updates plus a trivy scan on every build), and a daily scan of the live image.
 
 ## record it
 

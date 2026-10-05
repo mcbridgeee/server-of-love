@@ -1,0 +1,15 @@
+// Install to /etc/apt/apt.conf.d/52-server-of-love-unattended-upgrades
+// Ubuntu's 50unattended-upgrades already limits upgrades to the security
+// pocket; this only adds what happens afterward.
+
+// Some updates (the kernel, libc) only take effect after a reboot. Reboot
+// automatically, only when one is required, at 2:30 right after the 2:00 run.
+// Traefik, the sites, the quiz, and WUD all restart on their own
+// (restart: unless-stopped), and fail2ban starts after Docker.
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+Unattended-Upgrade::Automatic-Reboot-Time "02:30";
+
+// Don't let old kernels fill the disk.
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";

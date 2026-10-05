@@ -1,0 +1,5 @@
+// Install to /etc/apt/apt.conf.d/20auto-upgrades (see security/README.md).
+// Turns on the nightly package-list refresh and unattended security upgrades.
+// WHEN they run is set by the timer drop-ins in security/systemd/.
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
