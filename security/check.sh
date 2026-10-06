@@ -36,7 +36,7 @@ if systemctl is-active --quiet fail2ban 2>/dev/null; then
   if iptables -S DOCKER-USER 2>/dev/null | grep -q 'f2b-traefik-quiz-ratelimit'; then
     pass "quiz bans reach docker ports" "f2b chain hooked into DOCKER-USER"
   else
-    warn "quiz bans reach docker ports" "no f2b hook in DOCKER-USER yet (it appears once fail2ban starts after docker)"
+    warn "quiz bans reach docker ports" "no f2b hook in DOCKER-USER yet: fail2ban adds it at this jail's first ban (test: fail2ban-client set traefik-quiz-ratelimit banip 203.0.113.7, then unbanip)"
   fi
 else
   fail "fail2ban running" "not active (security/README.md step 4)"
