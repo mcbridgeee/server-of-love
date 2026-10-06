@@ -102,29 +102,34 @@ undo: `sudo ufw disable`
 
 ## 3. password on the traefik dashboard
 
-right now anyone can open the dashboard and read your routing setup. this follows 373_hosting chapter 5, but as an overlay file so regenerating the stack can't drop it.
+right now anyone can open `https://traefik.bmctiernan.com/dashboard/` and read your routing setup: every hostname, router, service, and container port. it can't change anything, but it's a free map for an attacker. the instructor left it open for the class demo; chapter 5 shows how to lock it. this does exactly that, as an overlay file so regenerating the stack can't drop it.
+
+**about 10 minutes.** run as root (`sudo -i` after step 1):
 
 ```bash
-sudo apt-get install -y apache2-utils
+apt-get install -y apache2-utils
 cd ~/373_hosting
-sudo install -d -m 700 runtime/secrets
-sudo htpasswd -cB runtime/secrets/dashboard.htpasswd admin     # it asks for the password; nothing lands in your shell history
-sudo chmod 600 runtime/secrets/dashboard.htpasswd
-sudo docker compose -f runtime/compose.yaml -f ~/server-of-love/hosting/compose.security.yaml config --quiet && echo "config ok"
-sudo docker compose -f runtime/compose.yaml -f ~/server-of-love/hosting/compose.security.yaml up -d
+install -d -m 700 runtime/secrets
+htpasswd -cB runtime/secrets/dashboard.htpasswd admin     # it asks for a password; nothing lands in your shell history
+chmod 600 runtime/secrets/dashboard.htpasswd
+~/server-of-love/hosting/compose.sh config --quiet && echo "config ok"
+~/server-of-love/hosting/compose.sh up -d
 ```
 
-check (use your dashboard hostname):
+`hosting/compose.sh` is plain `docker compose` with both files (`runtime/compose.yaml` + `hosting/compose.security.yaml`) already filled in, and it refuses to run if the password file is missing. **from now on use it for every hosting-stack command** (`compose.sh ps`, `compose.sh up -d`, `compose.sh logs traefik`). A bare `docker compose -f runtime/compose.yaml up -d` would quietly remove the password again.
+
+check, from your own computer:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://<dashboard-host>/dashboard/                      # 401
-curl -s -o /dev/null -w "%{http_code}\n" -u admin https://<dashboard-host>/dashboard/             # asks for the password, then 200
+curl -s -o /dev/null -w "%{http_code}\n" https://traefik.bmctiernan.com/dashboard/               # 401
+curl -s -o /dev/null -w "%{http_code}\n" -u admin https://traefik.bmctiernan.com/dashboard/      # asks for the password, then 200
 ```
 
-**from now on, every hosting-stack command needs both `-f` files** (or the password disappears):
-`sudo docker compose -f runtime/compose.yaml -f ~/server-of-love/hosting/compose.security.yaml <command>`
+and in a browser: the dashboard now pops up a login box. use `admin` and your password.
 
-rehearsed in a sandbox: no password → 401, wrong password → 401, right password → 200.
+undo: `cd ~/373_hosting && docker compose -f runtime/compose.yaml up -d` (without the overlay).
+
+rehearsed in a sandbox: no password → 401, wrong password → 401, right password → 200; the wrapper refuses to run without the password file.
 
 ## 4. fail2ban: ban ips that misbehave
 
@@ -235,6 +240,16 @@ sudo tail -20 /var/log/unattended-upgrades/unattended-upgrades.log
 undo: `sudo rm -r /etc/systemd/system/apt-daily*.timer.d && sudo systemctl daemon-reload` (back to ubuntu's random morning time).
 
 this patches ubuntu packages only. the quiz image gets its security fixes through its ci/cd pipeline (weekly dependabot base-image updates plus a trivy scan on every build), and a daily scan of the live image.
+
+## check everything at once
+
+`security/check.sh` is read-only: it changes nothing and prints `PASS` / `FAIL` / `WARN` for every item above, plus the quiz deploy. run it after each step, and once at the end:
+
+```bash
+sudo ~/server-of-love/security/check.sh
+```
+
+the end goal is `all required checks passed`. paste the output into issue #2; it prints no secrets. it's also the fastest thing to show your instructor.
 
 ## record it
 
