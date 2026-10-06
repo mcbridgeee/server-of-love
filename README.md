@@ -23,8 +23,8 @@ sites/
   www.bmctiernan.com/index.html
   report.bmctiernan.com/index.html (+ dashboard.png, failure-404.png)
 integrations/quiz/     traefik route for the quiz app (copied into the app's checkout), with a rate limit
-hosting/               overlay for the hosting stack: password on the traefik dashboard
-security/              hardening runbook + fail2ban, ssh, systemd config to copy onto the droplet
+hosting/               password on the traefik dashboard (overlay) + compose.sh, which always applies it
+security/              hardening runbook, check.sh (read-only audit), and fail2ban / ssh / update config for the droplet
 deploy.sh              copies pages to the live site folders
 hosting.example.json   template of the settings file (the real one stays private)
 ```
