@@ -1,4 +1,5 @@
-# Routing adapter for the toothpaste quiz (mcbridgeee/is373-ci-cd).
+# Routing adapter for the toothpaste quiz and calculator (mcbridgeee/is373-ci-cd).
+# One container serves both: quiz.bmctiernan.com and calc.bmctiernan.com.
 #
 # Copy into the QUIZ checkout on the droplet as compose.override.yaml (that
 # repo ignores it). Its Make commands load it on every operation. This file
@@ -19,6 +20,15 @@ services:
       traefik.http.routers.quiz.middlewares: quiz-ratelimit,quiz-headers
       traefik.http.routers.quiz.service: quiz
       traefik.http.services.quiz.loadbalancer.server.port: "8000"
+      # The calculator: same container and service, its own hostname. Visitors to
+      # calc.bmctiernan.com/ get the page the app serves at /calc; the page's
+      # /api/calculate and /health requests pass through unchanged.
+      traefik.http.routers.calc.rule: Host(`${CALC_HOST:-calc.bmctiernan.com}`)
+      traefik.http.routers.calc.entrypoints: websecure
+      traefik.http.routers.calc.middlewares: calc-root,quiz-ratelimit,quiz-headers
+      traefik.http.routers.calc.service: quiz
+      traefik.http.middlewares.calc-root.replacepathregex.regex: "^/$$"
+      traefik.http.middlewares.calc-root.replacepathregex.replacement: "/calc"
       # HSTS: browsers refuse plain HTTP for this host for a year. Only the TLS
       # terminator can send it honestly. No preload, no subdomains.
       traefik.http.middlewares.quiz-headers.headers.stsSeconds: "31536000"
