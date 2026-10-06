@@ -31,30 +31,20 @@ cd ~/server-of-love && git pull
 
 **before anything:** open a *second* terminal and log in to the droplet. leave it open the whole time. if a change breaks ssh, you fix it from that session. digitalocean's web console (droplet → access → launch droplet console) is the last-resort way in; it isn't ssh, so it still works after this step.
 
-### 1a. make your own sudo user (skip if you already log in as one)
+### 1a. your own sudo user: already done on this droplet
 
-check who you log in as: `whoami`. if it says `root`, create a user (pick your own name instead of `bridget`) and give it your existing ssh key:
+checked 2026-10-06: user `bridge` exists, is in the `sudo` group, `sudo` works with its password, and `ssh bridge@192.241.153.53` logs in with your key. your repos live in `/home/bridge` (`373_hosting`, `server-of-love`, `is373-ci-cd`).
 
-```bash
-adduser bridget                                   # set a password; sudo asks for it
-usermod -aG sudo bridget
-rsync --archive --chown=bridget:bridget ~/.ssh /home/bridget
-```
+from now on, log in as `bridge` and put `sudo` in front of admin commands. don't use `sudo -i` for these steps: it switches to root's home, where none of your folders are.
 
-from your own computer, in a **new** terminal:
-
-```bash
-ssh bridget@<droplet-ip> 'sudo whoami'            # asks for bridget's password, then prints: root
-```
-
-only continue if that prints `root`. from now on you log in as `bridget` and type `sudo -i` when you need root. `sudo -i` puts you in root's home, so `~/373_hosting`, `~/server-of-love`, and `~/is373-ci-cd` are exactly where they were.
+(on a fresh server you'd make the user first: `adduser bridge`, `usermod -aG sudo bridge`, `rsync --archive --chown=bridge:bridge ~/.ssh /home/bridge`, then test `ssh bridge@<ip> 'sudo whoami'` prints `root`.)
 
 ### 1b. turn off root login and passwords
 
 check that key login works on its own, from your own computer:
 
 ```bash
-ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes bridget@<droplet-ip> echo key-login-ok
+ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes bridge@192.241.153.53 echo key-login-ok
 ```
 
 only if that prints `key-login-ok`:
@@ -68,9 +58,9 @@ sudo systemctl reload ssh
 check from a *new* terminal (keep the old ones open):
 
 ```bash
-ssh bridget@<droplet-ip> echo still-in                                  # works with your key
-ssh root@<droplet-ip>                                                    # must say "Permission denied (publickey)"
-ssh -o PubkeyAuthentication=no bridget@<droplet-ip>                     # must say "Permission denied (publickey)"
+ssh bridge@192.241.153.53 echo still-in                                  # works with your key
+ssh root@192.241.153.53                                                   # must say "Permission denied (publickey)"
+ssh -o PubkeyAuthentication=no bridge@192.241.153.53                    # must say "Permission denied (publickey)"
 sudo sshd -T | grep -E "passwordauthentication|permitrootlogin"         # passwordauthentication no, permitrootlogin no
 ```
 
@@ -104,16 +94,16 @@ undo: `sudo ufw disable`
 
 right now anyone can open `https://traefik.bmctiernan.com/dashboard/` and read your routing setup: every hostname, router, service, and container port. it can't change anything, but it's a free map for an attacker. the instructor left it open for the class demo; chapter 5 shows how to lock it. this does exactly that, as an overlay file so regenerating the stack can't drop it.
 
-**about 10 minutes.** run as root (`sudo -i` after step 1):
+**about 10 minutes.** as `bridge`:
 
 ```bash
-apt-get install -y apache2-utils
+sudo apt-get install -y apache2-utils
 cd ~/373_hosting
-install -d -m 700 runtime/secrets
-htpasswd -cB runtime/secrets/dashboard.htpasswd admin     # it asks for a password; nothing lands in your shell history
-chmod 600 runtime/secrets/dashboard.htpasswd
-~/server-of-love/hosting/compose.sh config --quiet && echo "config ok"
-~/server-of-love/hosting/compose.sh up -d
+sudo install -d -m 700 runtime/secrets
+sudo htpasswd -cB runtime/secrets/dashboard.htpasswd admin     # it asks for a NEW dashboard password (sudo may ask for bridge's first); nothing lands in your shell history
+sudo chmod 600 runtime/secrets/dashboard.htpasswd
+sudo ~/server-of-love/hosting/compose.sh config --quiet && echo "config ok"
+sudo ~/server-of-love/hosting/compose.sh up -d
 ```
 
 `hosting/compose.sh` is plain `docker compose` with both files (`runtime/compose.yaml` + `hosting/compose.security.yaml`) already filled in, and it refuses to run if the password file is missing. **from now on use it for every hosting-stack command** (`compose.sh ps`, `compose.sh up -d`, `compose.sh logs traefik`). A bare `docker compose -f runtime/compose.yaml up -d` would quietly remove the password again.
@@ -127,7 +117,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -u admin https://traefik.bmctiernan.com
 
 and in a browser: the dashboard now pops up a login box. use `admin` and your password.
 
-undo: `cd ~/373_hosting && docker compose -f runtime/compose.yaml up -d` (without the overlay).
+undo: `cd ~/373_hosting && sudo docker compose -f runtime/compose.yaml up -d` (without the overlay).
 
 rehearsed in a sandbox: no password → 401, wrong password → 401, right password → 200; the wrapper refuses to run without the password file.
 
@@ -140,7 +130,7 @@ two jails:
 
 the limits are loose on purpose. a whole classroom shares one public ip. in the rehearsal, 30 people loading the quiz at the same moment got 90 out of 90 normal responses, while a script sending 600 requests in 4 seconds got 303 `429`s.
 
-the quiz route needs the rate limit first. that lives in `integrations/quiz/compose.traefik.yaml`, so re-copy it into the quiz checkout and redeploy:
+the quiz route needs the rate limit first. it lives in `integrations/quiz/compose.traefik.yaml`; if you deployed on or after 2026-10-06 it's already in place and you can skip this block. otherwise re-copy it and redeploy:
 
 ```bash
 cp ~/server-of-love/integrations/quiz/compose.traefik.yaml ~/is373-ci-cd/compose.override.yaml
