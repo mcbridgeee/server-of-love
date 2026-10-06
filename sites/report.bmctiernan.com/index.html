@@ -307,9 +307,10 @@ traefik.bmctiernan.com: DNS 192.241.153.53
       </table></div>
       <p><span class="label">backup</span> (a few seconds of downtime, archive readable only by root):</p>
 <pre><code>sudo install -d -m 700 /var/backups/hosting373
-sudo docker compose -f runtime/compose.yaml stop
+sudo ~/server-of-love/hosting/compose.sh stop
 sudo sh -c 'umask 077; tar -czf /var/backups/hosting373/backup-$(date -u +%Y%m%dT%H%M%SZ).tar.gz runtime hosting.json'
-sudo docker compose -f runtime/compose.yaml up -d</code></pre>
+sudo ~/server-of-love/hosting/compose.sh up -d</code></pre>
+      <p><code>compose.sh</code> keeps the dashboard password on. a bare <code>docker compose -f runtime/compose.yaml up -d</code> would quietly drop it. the archive now also holds <code>runtime/secrets/dashboard.htpasswd</code>, one more reason it stays private.</p>
       <p>then copy the archive to my own computer, encrypted, and never to github. a backup left on the same droplet disappears with it.</p>
       <p><span class="label">restore</span> on a new droplet: redo the user, firewall and docker setup, clone the course repo, extract the archive into it, check that <code>acme.json</code> is still permission 600, point dns at the new ip, start the stack, then run the verifier. if the certificate file is lost, traefik just requests new certificates once dns points at the server.</p>
     </section>

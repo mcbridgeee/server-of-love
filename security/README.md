@@ -64,6 +64,8 @@ ssh -o PubkeyAuthentication=no bridge@192.241.153.53                    # must s
 sudo sshd -T | grep -E "passwordauthentication|permitrootlogin"         # passwordauthentication no, permitrootlogin no
 ```
 
+the root and password checks above are *failed logins on purpose*. fail2ban (step 4) bans an ip after 5 failed logins in 10 minutes, and ssh can count one failure per key it tries. so run these checks only now, before step 4, and don't repeat them from home afterwards. on 2026-10-06 repeating them after step 4 banned my own home ip from ssh for an hour (the websites kept working). if that happens: wait an hour, use a phone hotspot, or open the digitalocean droplet console, change the end of its address from `?os_user=root` to `?os_user=bridge` (root is refused now), and run `sudo fail2ban-client set sshd unbanip <your ip>`. a `Host droplet` entry in your laptop's `~/.ssh/config` with `User bridge`, `IdentityFile`, and `IdentitiesOnly yes` keeps normal logins from ever counting.
+
 the file is named `10-…` because sshd keeps the first value it reads. digitalocean's `50-cloud-init.conf` can say `PasswordAuthentication yes`, and ours has to win. rehearsed with ubuntu 24.04's own sshd (openssh 9.6p1): with a cloud-init file saying yes to both, the effective settings were `permitrootlogin no`, `passwordauthentication no`, `maxauthtries 3`.
 
 undo: `sudo rm /etc/ssh/sshd_config.d/10-server-of-love.conf && sudo systemctl reload ssh`
