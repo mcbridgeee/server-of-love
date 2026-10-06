@@ -9,6 +9,7 @@
 set -u
 
 QUIZ_HOST=${QUIZ_HOST:-quiz.bmctiernan.com}
+CALC_HOST=${CALC_HOST:-calc.bmctiernan.com}
 DASHBOARD_HOST=${DASHBOARD_HOST:-traefik.bmctiernan.com}
 SITES=${SITES:-"bmctiernan.com www.bmctiernan.com report.bmctiernan.com"}
 fails=0
@@ -106,6 +107,13 @@ fi
 headers=$(curl -s -m 10 -D - -o /dev/null "https://$QUIZ_HOST/")
 printf '%s' "$headers" | grep -qi '^strict-transport-security' && pass "quiz HSTS" "present" || warn "quiz HSTS" "missing (adapter not applied?)"
 printf '%s' "$headers" | grep -qi '^content-security-policy' && pass "quiz CSP" "present" || warn "quiz CSP" "missing"
+if curl -s -m 10 "https://$CALC_HOST/" | grep -q '<h1>Calculator</h1>'; then
+  answer=$(curl -s -m 10 -H 'Content-Type: application/json' -d '{"a":6,"b":7,"operation":"multiply"}' "https://$CALC_HOST/api/calculate")
+  [ "$answer" = '{"result":42.0}' ] && pass "calculator live over https" "https://$CALC_HOST: 6 x 7 = 42" \
+    || fail "calculator live over https" "page loads but /api/calculate answered: ${answer:-nothing}"
+else
+  fail "calculator live over https" "no calculator at https://$CALC_HOST (DNS record? adapter re-copied?)"
+fi
 if has docker && docker inspect is373-ci-cd-prod-1 --format '{{json .Config.Labels}}' 2>/dev/null | grep -q 'quiz-ratelimit'; then
   pass "quiz rate limit" "middleware on the route"
 else

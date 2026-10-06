@@ -8,6 +8,7 @@ my first self-hosted web server, built for is373. one ubuntu droplet on digitalo
 | [www.bmctiernan.com](https://www.bmctiernan.com) | lavender welcome page |
 | [report.bmctiernan.com](https://report.bmctiernan.com) | blue lab report: request path, dns, verification, dashboard, controlled failure, backup plan |
 | [quiz.bmctiernan.com](https://quiz.bmctiernan.com) | toothpaste quiz app from [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd), auto-updated by its ci/cd pipeline |
+| [calc.bmctiernan.com](https://calc.bmctiernan.com) | calculator from the same app and container (browser vs. server, "results match") |
 
 ## how it works
 
