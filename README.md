@@ -1,18 +1,19 @@
 # server-of-love
 
-my first self-hosted web server, built for is373. one ubuntu droplet on digitalocean runs three websites, a quiz app, and a traefik dashboard, each on its own hostname with automatic https.
+my first self-hosted web server, built for is373. one ubuntu droplet on digitalocean runs two websites, the calculator and quiz app from [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd), and a traefik dashboard, each on its own hostname with automatic https.
 
 | hostname | what's there |
 | --- | --- |
-| [bmctiernan.com](https://bmctiernan.com) | pink welcome page |
+| [bmctiernan.com](https://bmctiernan.com) | calculator, production: the [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd) app's `prod` container (browser vs. server, "results match") |
 | [www.bmctiernan.com](https://www.bmctiernan.com) | lavender welcome page |
 | [report.bmctiernan.com](https://report.bmctiernan.com) | blue lab report: request path, dns, verification, dashboard, controlled failure, backup plan |
-| [quiz.bmctiernan.com](https://quiz.bmctiernan.com) | toothpaste quiz app from [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd), auto-updated by its ci/cd pipeline |
-| [calc.bmctiernan.com](https://calc.bmctiernan.com) | calculator from the same app and container (browser vs. server, "results match") |
+| [quiz.bmctiernan.com](https://quiz.bmctiernan.com) | toothpaste quiz from the same app and container, auto-updated by its ci/cd pipeline |
+| [calc.bmctiernan.com](https://calc.bmctiernan.com) | the production calculator again, same container |
+| [qa.bmctiernan.com](https://qa.bmctiernan.com) | calculator, QA: the app's separate `qa` container, updated from its `qa` branch |
 
 ## how it works
 
-a visitor's browser asks dns for the name, dns points it at the droplet, and traefik (a reverse proxy) handles https and reads the hostname to pick the right container. each site is its own apache container serving one `index.html`.
+a visitor's browser asks dns for the name, dns points it at the droplet, and traefik (a reverse proxy) handles https and reads the hostname to pick the right container. www and report are apache containers serving one `index.html` each. bmctiernan.com, quiz, calc, and qa go to the is373-ci-cd app's containers instead.
 
 the server is set up with my instructor's [373_hosting](https://github.com/kaw393939/373_hosting) scripts. this repo holds only my own work: the pages in `sites/`.
 
@@ -20,10 +21,10 @@ the server is set up with my instructor's [373_hosting](https://github.com/kaw39
 
 ```
 sites/
-  bmctiernan.com/index.html
+  bmctiernan.com/index.html (the old pink welcome page, kept but not served: the app's route wins)
   www.bmctiernan.com/index.html
   report.bmctiernan.com/index.html (+ dashboard.png, failure-404.png)
-integrations/quiz/     traefik route for the quiz app (copied into the app's checkout), with a rate limit
+integrations/quiz/     original traefik route for the quiz and calc, with a rate limit (see "the quiz app" below)
 hosting/               password on the traefik dashboard (overlay) + compose.sh, which always applies it
 security/              hardening runbook, check.sh (read-only audit), and fail2ban / ssh / update config for the droplet
 deploy.sh              copies pages to the live site folders
@@ -44,7 +45,7 @@ the live pages are served from `~/373_hosting/runtime/sites/<hostname>/`, and ch
 
 ## the quiz app
 
-the quiz isn't an apache site. it's a container image built, tested, and published by [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd), then pulled here. `integrations/quiz/` is the small adapter that connects it to traefik. the step-by-step lives in the app repo's [docs/hosting.md](https://github.com/mcbridgeee/is373-ci-cd/blob/main/docs/hosting.md).
+the quiz isn't an apache site. it's a container image built, tested, and published by [is373-ci-cd](https://github.com/mcbridgeee/is373-ci-cd), then pulled here. the live traefik routes (bmctiernan.com, quiz, calc, qa) come from that repo's [deploy/compose.traefik.yaml](https://github.com/mcbridgeee/is373-ci-cd/blob/main/deploy/compose.traefik.yaml). `integrations/quiz/` is the original quiz and calc adapter, which doesn't have the bmctiernan.com or qa routes. the step-by-step lives in the app repo's [docs/hosting.md](https://github.com/mcbridgeee/is373-ci-cd/blob/main/docs/hosting.md).
 
 ## security
 
